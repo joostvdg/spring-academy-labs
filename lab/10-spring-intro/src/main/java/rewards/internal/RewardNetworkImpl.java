@@ -49,10 +49,48 @@ public class RewardNetworkImpl implements RewardNetwork {
 		this.rewardRepository = rewardRepository;
 	}
 
+	// TODO: should we ensure this is Transactional?
 	public RewardConfirmation rewardAccountFor(Dining dining) {
+
 		// TODO-07: Write code here for rewarding an account according to
 		//          the sequence diagram in the lab document
+
+		// find customer's account via the AccountRepository
+		var creditCardNumber = dining.getCreditCardNumber();
+		if (creditCardNumber == null) {
+			throw new IllegalArgumentException("Credit card number is required");
+		}
+		var account = accountRepository.findByCreditCard(creditCardNumber);
+		if (account == null) {
+			throw new IllegalArgumentException("Account not found for credit card number: " + obfuscatedCreditCard(creditCardNumber));
+		}
+
+		// find restaurant details via the RestaurantRepository
+		var merchantNumber = dining.getMerchantNumber();
+		if (merchantNumber == null) {
+			throw new IllegalArgumentException("Merchant number is required");
+		}
+
+		var restaurant = restaurantRepository.findByMerchantNumber(merchantNumber);
+		if (restaurant == null) {
+			throw new IllegalArgumentException("Restaurant not found for merchant number: " + merchantNumber);
+		}
+
+		// make a reward calculation
+		var rewardAmount = restaurant.calculateBenefitFor(account, dining);
+
+		// make a reward confirmation
+		var contribution = account.makeContribution(rewardAmount);
+		accountRepository.updateBeneficiaries(account);
+		var awardConfirmation = rewardRepository.confirmReward(contribution, dining);
+
 		// TODO-08: Return the corresponding reward confirmation
-		return null;
+		// return the reward confirmation
+		return awardConfirmation;
+	}
+
+	private String obfuscatedCreditCard(String creditCardNumber) {
+		// strip out everything but the last four digits
+		return "xxxx-xxxx-xxxx-" + creditCardNumber.substring(creditCardNumber.length() - 4);
 	}
 }
