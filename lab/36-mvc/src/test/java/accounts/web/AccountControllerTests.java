@@ -4,6 +4,7 @@ import accounts.internal.StubAccountManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
 import rewards.internal.account.Account;
 
 import java.util.List;
@@ -28,7 +29,6 @@ public class AccountControllerTests {
 
 	// TODO-07: Remove the @Disabled annotation, run the test, it should now pass.
 	@Test
-	@Disabled
 	public void testHandleListRequest() {
 		List<Account> accounts = controller.accountList();
 
@@ -44,16 +44,26 @@ public class AccountControllerTests {
 
 	// TODO-10a: Remove the @Disabled annotation, run the test, it should pass.
 	@Test
-	@Disabled
 	public void testHandleDetailsRequest() {
 		// TODO-09a: Implement test code which calls the accountDetails() method on the controller.
 		// - It will take one parameter - use "expectedAccountId" defined above
 		// - It will return an Account
+		var actualAccount = controller.getAccountById(expectedAccountId).getBody();
 
 		// TODO-09b: Define the following assertions:
 		// - The account is not null
 		// - The account id matches "expectedAccountId" defined above
 		// - The account number matches "expectedAccountNumber" defined above
+		assertNotNull(actualAccount);
+		assertEquals(expectedAccountId, actualAccount.getEntityId());
+		assertEquals(expectedAccountNumber, actualAccount.getNumber());
+	}
+
+	@Test
+	public void shouldReturnNotFoundForNonExistingAccount() {
+		Long nonExistantAccountId = 12313423552L;
+		var response = controller.getAccountById(nonExistantAccountId);
+		assertEquals(HttpStatus.NOT_FOUND ,response.getStatusCode());
 	}
 
 }

@@ -2,6 +2,11 @@ package accounts.web;
 
 import accounts.AccountManager;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import rewards.internal.account.Account;
 
 import java.util.List;
@@ -18,7 +23,7 @@ import java.util.List;
  *
  */
 // TODO-03: Add an appropriate annotation to make this class a REST controller
-	
+@RestController
 public class AccountController {
 
 	private final AccountManager accountManager;
@@ -35,7 +40,7 @@ public class AccountController {
 	 * Return a list of all accounts
 	 */
 	// TODO-04: Add an appropriate annotation to make this method handle "/accounts"
-
+	@GetMapping("/accounts")
 	public List<Account> accountList() {
 
 		// TODO-05: Implement the logic to find and return all accounts
@@ -44,7 +49,7 @@ public class AccountController {
 		// - From the home page, click the link - this should now work
 		// - If you prefer, access http://localhost:8080/accounts using curl or Postman
 
-		return null; // REPLACE THIS LINE to return a list accounts
+		return accountManager.getAllAccounts();
 		
 		// TODO-06: (If you are using STS) We are about to make lots of
 		//          changes, so stop the application otherwise Devtools
@@ -59,6 +64,15 @@ public class AccountController {
 	//   needed to retrieve an account.
 	// - Use the accountManager to obtain an account. This is the value to return
 	// - Save all work.
+	@GetMapping("/accounts/{entityId}")
+	public ResponseEntity<Account> getAccountById(@PathVariable Long entityId) {
+		var foundAccount = accountManager.getAccount(entityId);
+		if (foundAccount == null ) {
+			return ResponseEntity.notFound().build();
+		}
+		return ResponseEntity.ok(foundAccount);
+	}
+
 
 
 	// TODO-10b: If AccountControllerTests.testHandleDetailsRequest()
