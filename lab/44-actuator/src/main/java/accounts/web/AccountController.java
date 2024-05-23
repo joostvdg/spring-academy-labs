@@ -2,6 +2,9 @@ package accounts.web;
 
 import accounts.AccountManager;
 import common.money.Percentage;
+import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +36,11 @@ public class AccountController {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
-	private AccountManager accountManager;
+	private final AccountManager accountManager;
+
+	private final MeterRegistry meterRegistry;
+
+	private final Counter accountFetch;
 
 	// TODO-08: Add a Micrometer Counter
 	// - Inject a MeterRegistry through constructor injection
@@ -41,9 +48,11 @@ public class AccountController {
 	// - Create a Counter from the MeterRegistry: name the counter "account.fetch"
 	//   with a tag of "type"/"fromCode" key/value pair
 	@Autowired
-	public AccountController(AccountManager accountManager) {
+	public AccountController(AccountManager accountManager, MeterRegistry meterRegistry) {
 		this.accountManager = accountManager;
-	}
+        this.meterRegistry = meterRegistry;
+		accountFetch = this.meterRegistry.counter("account.fetch", "type", "fromCode");
+    }
 
 	/**
 	 * Provide a list of all accounts.
@@ -53,8 +62,10 @@ public class AccountController {
      * - Set the metric name to "account.timer"
      * - Set a extra tag with "source"/"accountSummary" key/value pair
 	 */
+	@Timed("account.timer")
 	@GetMapping(value = "/accounts")
 	public List<Account> accountSummary() {
+		logger.debug("Testing - Account Summary Invocation");
 		return accountManager.getAllAccounts();
 	}
 
@@ -70,9 +81,10 @@ public class AccountController {
      *  - Set the metric name to "account.timer"
      *  - Set extra tag with "source"/"accountDetails" key/value pair
 	 */
+	@Timed(value = "account.timer", description = "", extraTags = {"source", "accountDetails"})
 	@GetMapping(value = "/accounts/{id}")
 	public Account accountDetails(@PathVariable int id) {
-
+		accountFetch.increment();
 		return retrieveAccount(id);
 	}
 
